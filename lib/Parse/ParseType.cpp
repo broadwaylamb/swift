@@ -595,7 +595,7 @@ ParserStatus Parser::parseGenericArguments(SmallVectorImpl<TypeRepr *> &Args,
 /// parseTypeIdentifier
 ///   
 ///   type-identifier:
-///     identifier generic-args? ('.' identifier generic-args?)*
+///     identifier generic-args? ('.' ( '(' identifier ')' )? identifier generic-args?)*
 ///
 ParserResult<TypeRepr> Parser::parseTypeIdentifier() {
   if (Tok.isNot(tok::identifier) && Tok.isNot(tok::kw_Self)) {
@@ -627,6 +627,8 @@ ParserResult<TypeRepr> Parser::parseTypeIdentifier() {
   while (true) {
     SourceLoc Loc;
     Identifier Name;
+    ModuleDecl *ExplicitModule = maybeParseExplicitModuleQualification();
+
     if (Tok.is(tok::kw_Self)) {
       Loc = consumeIdentifier(&Name);
     } else {
@@ -641,7 +643,9 @@ ParserResult<TypeRepr> Parser::parseTypeIdentifier() {
       SourceLoc LAngle, RAngle;
       SmallVector<TypeRepr*, 8> GenericArgs;
       if (startsWithLess(Tok)) {
-        auto genericArgsStatus = parseGenericArguments(GenericArgs, LAngle, RAngle);
+        auto genericArgsStatus = parseGenericArguments(GenericArgs,
+                                                       LAngle,
+                                                       RAngle);
         if (genericArgsStatus.isError())
           return genericArgsStatus;
       }
@@ -649,10 +653,14 @@ ParserResult<TypeRepr> Parser::parseTypeIdentifier() {
 
       ComponentIdentTypeRepr *CompT;
       if (!GenericArgs.empty())
-        CompT = GenericIdentTypeRepr::create(Context, Loc, Name, GenericArgs,
-                                             SourceRange(LAngle, RAngle));
+        CompT = GenericIdentTypeRepr::create(Context,
+                                             Loc,
+                                             Name,
+                                             GenericArgs,
+                                             SourceRange(LAngle, RAngle),
+                                             ExplicitModule);
       else
-        CompT = new (Context) SimpleIdentTypeRepr(Loc, Name);
+        CompT = new (Context) SimpleIdentTypeRepr(Loc, Name, ExplicitModule);
       ComponentsR.push_back(CompT);
     }
     SyntaxContext->createNodeInPlace(ComponentsR.size() == 1

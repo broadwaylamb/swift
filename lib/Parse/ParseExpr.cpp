@@ -831,6 +831,41 @@ UnresolvedDeclRefExpr *Parser::parseExprOperator() {
   return new (Context) UnresolvedDeclRefExpr(name, refKind, DeclNameLoc(loc));
 }
 
+ModuleDecl *Parser::maybeParseExplicitModuleQualification(){
+  
+  if (Tok.isNot(tok::l_paren)) {
+    return nullptr;
+  }
+
+  consumeToken(tok::l_paren);
+
+  if (Tok.isNot(tok::identifier)) {
+    // TODO: Diagnose properly
+    diagnose(Tok, diag::decl_expected_module_name);
+    return nullptr;
+  }
+
+  Identifier ModuleName;
+  SourceLoc ModuleNameLoc = consumeIdentifier(&ModuleName);
+
+  if (Tok.isNot(tok::r_paren)) {
+    // TODO: Diagnose properly
+    diagnose(Tok, diag::decl_expected_module_name);
+    return nullptr;
+  }
+
+  consumeToken(tok::r_paren);
+
+  ModuleDecl *M = Context.getModuleByName(ModuleName.str());
+
+  if (!M) {
+    // TODO: Diagnose properly
+    diagnose(ModuleNameLoc, diag::decl_expected_module_name);
+  }
+
+  return M;
+}
+
 static VarDecl *getImplicitSelfDeclForSuperContext(Parser &P,
                                                    DeclContext *DC,
                                                    SourceLoc Loc) {
@@ -2073,6 +2108,7 @@ DeclName Parser::parseUnqualifiedDeclName(bool afterDot,
   // Consume the base name.
   DeclBaseName baseName;
   SourceLoc baseNameLoc;
+  ModuleDecl *ExplicitModule = maybeParseExplicitModuleQualification();
   if (Tok.isAny(tok::identifier, tok::kw_Self, tok::kw_self)) {
     Identifier baseNameId;
     baseNameLoc = consumeIdentifier(

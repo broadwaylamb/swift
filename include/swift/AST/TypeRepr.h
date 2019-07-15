@@ -266,13 +266,23 @@ class ComponentIdentTypeRepr : public IdentTypeRepr {
   /// name binding will resolve this to a specific declaration.
   llvm::PointerUnion<Identifier, TypeDecl *> IdOrDecl;
 
+  /// This is nullptr if the module was not specified explicitly
+  ModuleDecl *ExplicitModule;
+
   /// The declaration context from which the bound declaration was
   /// found. only valid if IdOrDecl is a TypeDecl.
   DeclContext *DC;
 
 protected:
-  ComponentIdentTypeRepr(TypeReprKind K, SourceLoc Loc, Identifier Id)
-    : IdentTypeRepr(K), Loc(Loc), IdOrDecl(Id), DC(nullptr) {}
+  ComponentIdentTypeRepr(TypeReprKind K,
+                         SourceLoc Loc,
+                         Identifier Id,
+                         ModuleDecl *ExplicitModule = nullptr)
+    : IdentTypeRepr(K),
+      Loc(Loc),
+      IdOrDecl(Id),
+      ExplicitModule(ExplicitModule),
+      DC(nullptr) {}
 
 public:
   SourceLoc getIdLoc() const { return Loc; }
@@ -313,8 +323,11 @@ protected:
 /// A simple identifier type like "Int".
 class SimpleIdentTypeRepr : public ComponentIdentTypeRepr {
 public:
-  SimpleIdentTypeRepr(SourceLoc Loc, Identifier Id)
-    : ComponentIdentTypeRepr(TypeReprKind::SimpleIdent, Loc, Id) {}
+  SimpleIdentTypeRepr(SourceLoc Loc,
+                      Identifier Id,
+                      ModuleDecl* ExplicitModule = nullptr)
+    : ComponentIdentTypeRepr(TypeReprKind::SimpleIdent, Loc, Id, ExplicitModule)
+  {}
 
   // SmallVector::emplace_back will never need to call this because
   // we reserve the right size, but it does try statically.
@@ -363,7 +376,8 @@ public:
                                       SourceLoc Loc,
                                       Identifier Id,
                                       ArrayRef<TypeRepr*> GenericArgs,
-                                      SourceRange AngleBrackets);
+                                      SourceRange AngleBrackets,
+                                      ModuleDecl *ExplicitModule = nullptr);
 
   unsigned getNumGenericArgs() const {
     return Bits.GenericIdentTypeRepr.NumGenericArgs;

@@ -1435,6 +1435,9 @@ public:
 
   UnresolvedDeclRefExpr *parseExprOperator();
 
+  /// Parse explicitly specified module name in period-separated chain of types or members
+  ModuleDecl *maybeParseExplicitModuleQualification();
+
   //===--------------------------------------------------------------------===//
   // Statement Parsing
 

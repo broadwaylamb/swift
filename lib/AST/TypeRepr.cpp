@@ -441,8 +441,9 @@ TupleTypeRepr *TupleTypeRepr::createEmpty(const ASTContext &C,
 GenericIdentTypeRepr *GenericIdentTypeRepr::create(const ASTContext &C,
                                                    SourceLoc Loc,
                                                    Identifier Id,
-                                                ArrayRef<TypeRepr*> GenericArgs,
-                                                   SourceRange AngleBrackets) {
+                                                   ArrayRef<TypeRepr*> GenericArgs,
+                                                   SourceRange AngleBrackets,
+                                                   ModuleDecl *ExplicitModule) {
   auto size = totalSizeToAlloc<TypeRepr*>(GenericArgs.size());
   auto mem = C.Allocate(size, alignof(GenericIdentTypeRepr));
   return new (mem) GenericIdentTypeRepr(Loc, Id, GenericArgs, AngleBrackets);
