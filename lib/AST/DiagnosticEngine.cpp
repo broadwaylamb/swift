@@ -186,7 +186,11 @@ InFlightDiagnostic &InFlightDiagnostic::fixItRemove(SourceRange R) {
 
 
 InFlightDiagnostic &InFlightDiagnostic::fixItReplace(SourceRange R,
-                                                     StringRef Str) {
+                                                     const Twine &T) {
+
+  SmallString<0> OwnedStr;
+  StringRef Str = T.toStringRef(OwnedStr);
+
   if (Str.empty())
     return fixItRemove(R);
 

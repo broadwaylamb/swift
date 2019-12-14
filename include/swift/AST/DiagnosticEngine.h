@@ -423,7 +423,7 @@ namespace swift {
 
     /// Add a token-based replacement fix-it to the currently-active
     /// diagnostic.
-    InFlightDiagnostic &fixItReplace(SourceRange R, StringRef Str);
+    InFlightDiagnostic &fixItReplace(SourceRange R, const Twine &Str);
 
     /// Add a character-based replacement fix-it to the currently-active
     /// diagnostic.
